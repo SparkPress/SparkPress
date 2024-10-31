@@ -2,6 +2,7 @@
 
 namespace App\Actions\Authentication;
 
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Validation\ValidationException;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -13,7 +14,7 @@ class LoginUser
 {
     use AsAction;
 
-    public function handle(string $email, string $password, bool $remember = false): void
+    public function handle(string $email, string $password, bool $remember = false): User|null
     {
         $key = Str::transliterate(Str::lower($email).'|'.request()->ip());
 
@@ -39,17 +40,7 @@ class LoginUser
 
         // We've logged in, so we can clear the rate limiter
         RateLimiter::clear($key);
-    }
 
-    public function asController()
-    {
-        $data = Validator::validate(request()->all(), [
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-            'remember' => ['nullable', 'boolean'],
-        ]);
-
-        $this->handle($data['email'], $data['password'], $data['remember'] ?? false);
-        return redirect()->intended('/dashboard');
+        return auth()->user();
     }
 }
